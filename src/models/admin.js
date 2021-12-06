@@ -16,6 +16,9 @@ const AdminSchema = new mongoose.Schema({
         required: true,
         minlength: 8
     },
+    avatar: {
+        type: Buffer
+    },
     tokens: [{
         token: {
             type: String

@@ -1,6 +1,7 @@
 require('./db/mongoose.js');
 const express = require('express');
 var bodyParser = require('body-parser');
+const multer = require('multer');
 
 const app = express();
 
@@ -23,7 +24,10 @@ app.post('/api/student', auth, async (req, res) => {
         req.body.age = age;
         var student = new Student(req.body);
         await student.save();
-        res.status(201).send("Student created successfully");
+        res.status(201).send({
+            msg: "Student created sucessfully",
+            student
+        });
     } catch (e) {
         res.status(500).send("Unable to create");
     }
@@ -45,7 +49,10 @@ function getAge(dateString) {
 app.get('/api/student', auth, async (req, res) => {
     try {
         var students = await Student.find(req.query);
-        res.status(200).send(students);
+        res.status(200).send({
+            msg: "Students information",
+            students
+        });
     } catch (e) {
         res.status(500).send("Unable to get the students");
     }
@@ -55,7 +62,9 @@ app.get('/api/student', auth, async (req, res) => {
 app.put('/api/student/:id', auth, async (req, res) => {
     try {
         await Student.findByIdAndUpdate(req.params.id, req.body);
-        res.status(201).send("Updated Successfully");
+        res.status(201).send({
+            msg: "Updated Successfully"
+        });
     } catch (e) {
         res.status(500).send("Unable to edit the student");
     }
@@ -65,7 +74,9 @@ app.put('/api/student/:id', auth, async (req, res) => {
 app.delete('/api/student/:id', auth, async (req, res) => {
     try {
         await Student.findByIdAndDelete(req.params.id);
-        res.status(200).send("Deleted Successfully");
+        res.status(200).send({
+            msg: "Deleted Successfully"
+        });
     } catch (e) {
         res.status(500).send("Unable to delete the student");
     }
@@ -76,7 +87,10 @@ app.post('/api/reg', async (req, res) => {
     try {
         var admin = new Admin(req.body);
         await admin.save();
-        res.status(201).send("Registered sucessfully");
+        res.status(201).send({
+            msg: "Registerd sucessfully",
+            admin: admin
+        });
     } catch (e) {
         res.status(500).send("Unable to register");
     }
@@ -88,6 +102,7 @@ app.post('/api/login', async (req, res) => {
         var admin = await Admin.findByCredential(req.body.email, req.body.password);
         var token = await admin.generateAuthToken();
         res.status(200).send({
+            msg: "Logged in sucessfully",
             admin,
             token
         })
@@ -104,9 +119,37 @@ app.post('/api/logout', auth, async (req, res) => {
         })
 
         await req.admin.save();
-        res.status(200).send("Logout successfully");
+        res.status(200).send({
+            msg:"Logout successfully"
+        });
     } catch (e) {
         res.status(500).send("Unable To Logout");
+    }
+})
+
+app.post('/api/logoutall', auth, async (req, res) => {
+    try{
+        req.admin.tokens = [];
+        await req.admin.save();
+        res.status(200).send({
+            msg:"Logout successfully"
+        });
+    } catch (e) {
+        res.status(500).send("Unable To Logoutall");
+    }
+})
+
+const upload = multer({
+    // dest:'img'
+})
+app.post('/api/admin/avatar', auth , upload.single('avatar'), async (req,res) =>{
+    try{
+        req.admin.avatar = req.file.buffer 
+        await req.admin.save();  
+        res.status(200).send("Image uploaded sucessfully")
+    } catch (e){
+        console.log("error",e)
+        res.status(500).send("Image failed");
     }
 })
 
